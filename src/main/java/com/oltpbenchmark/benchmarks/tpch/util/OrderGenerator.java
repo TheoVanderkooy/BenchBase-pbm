@@ -1,6 +1,6 @@
 /*
  * Copyright 2020 Trino
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,8 +44,8 @@ public class OrderGenerator
     // portion with have no orders
     public static final int CUSTOMER_MORTALITY = 3;
 
-    private static final int ORDER_DATE_MIN = MIN_GENERATE_DATE;
-    private static final int ORDER_DATE_MAX = ORDER_DATE_MIN + (TOTAL_DATE_RANGE - ITEM_SHIP_DAYS - 1);
+    public static final int ORDER_DATE_MIN = MIN_GENERATE_DATE;
+    public static final int ORDER_DATE_MAX = ORDER_DATE_MIN + (TOTAL_DATE_RANGE - ITEM_SHIP_DAYS - 1);
     private static final int CLERK_SCALE_BASE = 1000;
 
     private static final int LINE_COUNT_MIN = 1;

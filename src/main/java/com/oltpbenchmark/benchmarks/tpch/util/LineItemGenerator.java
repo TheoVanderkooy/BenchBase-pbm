@@ -1,6 +1,6 @@
 /*
  * Copyright 2020 Trino
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,8 +42,8 @@ public class LineItemGenerator
     private static final int DISCOUNT_MAX = 10;
     private static final int PART_KEY_MIN = 1;
 
-    private static final int SHIP_DATE_MIN = 1;
-    private static final int SHIP_DATE_MAX = 121;
+    public static final int SHIP_DATE_MIN = 1;
+    public static final int SHIP_DATE_MAX = 121;
     private static final int COMMIT_DATE_MIN = 30;
     private static final int COMMIT_DATE_MAX = 90;
     private static final int RECEIPT_DATE_MIN = 1;
