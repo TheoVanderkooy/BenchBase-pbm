@@ -44,18 +44,20 @@ public class Phase {
     private final boolean timed;
     private final List<Double> weights;
     private final int weightCount;
+    private final List<Integer> counts;
     private final int activeTerminals;
     private int nextSerial;
 
 
-    Phase(String benchmarkName, int id, int t, int wt, int r, List<Double> weights, boolean rateLimited, boolean disabled, boolean serial, boolean timed, int activeTerminals, Arrival a) {
+    Phase(String benchmarkName, int id, int t, int wt, int r, List<Double> weights, List<Integer> counts, boolean rateLimited, boolean disabled, boolean serial, boolean timed, int activeTerminals, Arrival a) {
         this.benchmarkName = benchmarkName;
         this.id = id;
         this.time = t;
         this.warmupTime = wt;
         this.rate = r;
         this.weights = weights;
-        this.weightCount = this.weights.size();
+        this.weightCount = (weights != null ? this.weights.size() : counts.size());
+        this.counts = counts;
         this.rateLimited = rateLimited;
         this.disabled = disabled;
         this.serial = serial;
@@ -85,6 +87,10 @@ public class Phase {
 
     public boolean isLatencyRun() {
         return !timed && serial;
+    }
+
+    public boolean isWorkloadRun() {
+        return counts != null;
     }
 
     public boolean isThroughputRun() {
@@ -125,6 +131,10 @@ public class Phase {
 
     public List<Double> getWeights() {
         return (this.weights);
+    }
+
+    public List<Integer> getCounts() {
+        return this.counts;
     }
 
     /**
@@ -215,7 +225,12 @@ public class Phase {
             inner.add("[WarmupTime=" + warmupTime + "]");
             inner.add("[Rate=" + (isRateLimited() ? rate : "unlimited") + "]");
             inner.add("[Arrival=" + arrival + "]");
-            inner.add("[Ratios=" + getWeights() + "]");
+            if (getWeights() != null) {
+                inner.add("[Ratios=" + getWeights() + "]");
+            }
+            if (this.counts != null) {
+                inner.add("[Counts=" + this.counts + "]");
+            }
             inner.add("[ActiveWorkers=" + getActiveTerminals() + "]");
         }
 

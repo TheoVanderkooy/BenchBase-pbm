@@ -44,6 +44,7 @@ public class WorkloadState {
     private int workersWaiting = 0;
     private int workersWorking = 0;
     private int workerNeedSleep;
+    private int workersInWorkload = 0;
 
     private Phase currentPhase = null;
 
@@ -60,7 +61,7 @@ public class WorkloadState {
      */
     public void addToQueue(int amount, boolean resetQueues) {
         int workAdded = 0;
-        
+
         synchronized (this) {
             if (resetQueues) {
                 workQueue.clear();
@@ -71,7 +72,7 @@ public class WorkloadState {
                     || !currentPhase.isRateLimited() || currentPhase.isSerial()) {
                 return;
             }
-            
+
             // Add the specified number of procedures to the end of the queue.
             // If we can't keep up with current rate, truncate transactions
             for (int i = 0; i < amount && workQueue.size() <= RATE_QUEUE_LIMIT; ++i) {
@@ -123,6 +124,7 @@ public class WorkloadState {
             }
         }
 
+
         // Unlimited-rate phases don't use the work queue.
         if (currentPhase != null && !currentPhase.isRateLimited()) {
             synchronized (this) {
@@ -157,9 +159,24 @@ public class WorkloadState {
         }
     }
 
+    /**
+     * Called by ThreadPoolThreads during workload runs instead of fetchWork,
+     * since they decide what to do on their own in that case.
+     * @return false if the thread should not start working.
+     */
+    public boolean startWork() {
+        synchronized (this) {
+            if (getGlobalState() == State.EXIT || getGlobalState() == State.DONE) {
+                return false;
+            } else {
+                ++workersWorking;
+                return true;
+            }
+        }
+    }
+
     public void finishedWork() {
         synchronized (this) {
-
             --workersWorking;
         }
     }
@@ -217,6 +234,11 @@ public class WorkloadState {
                 {
                     workerNeedSleep = this.num_terminals
                             - this.currentPhase.getActiveTerminals();
+
+                    // track how many workers need to finish the phase for workload runs
+                    if (this.currentPhase.isWorkloadRun()) {
+                        this.workersInWorkload = this.currentPhase.getActiveTerminals();
+                    }
                 }
 
             }
@@ -262,4 +284,29 @@ public class WorkloadState {
         return benchmarkState.getTestStartNs();
     }
 
+    public void workloadPhaseDone(Phase curPhase) {
+        synchronized (this) {
+            // If already on the next phase, do nothing
+            // (should be impossible)
+            if (this.currentPhase != curPhase) return;
+
+            // Record that the worker finished the phase
+            --this.workersInWorkload;
+
+            if (this.workersInWorkload > 0) {
+                // Sleep until all other workers are done
+                while (this.workersInWorkload > 0 && this.currentPhase == curPhase) {
+                    try {
+                        this.wait();
+                    } catch (InterruptedException e) {
+                        LOG.error(e.getMessage(), e);
+                    }
+                }
+            } else {
+                // We were the last one: wake everyone else up
+                this.benchmarkState.signalWorkloadComplete();
+                this.notifyAll();
+            }
+        }
+    }
 }

@@ -55,9 +55,9 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
     }
 
     private void createWorkerThreads() {
-
+        int i = 0;
         for (Worker<?> worker : workers) {
-            worker.initializeState();
+            worker.initializeState(i++);
             Thread thread = new Thread(worker);
             thread.setUncaughtExceptionHandler(this);
             thread.start();
@@ -138,6 +138,11 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
             synchronized (testState) {
                 testState.startColdQuery();
             }
+        } else if (phase != null && phase.isWorkloadRun()) {
+            synchronized (testState) {
+                // no warmup phase for workload run either, but also no "cold query"
+                testState.startMeasure();
+            }
         }
 
         long intervalNs = getInterval(lowestRate, phase.getArrival());
@@ -163,7 +168,6 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
         while (true) {
             // posting new work... and resetting the queue in case we have new
             // portion of the workload...
-
             for (WorkloadState workState : workStates) {
                 if (workState.getCurrentPhase() != null) {
                     rateFactor = workState.getCurrentPhase().getRate() / lowestRate;
@@ -199,6 +203,9 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
                 // state to mark completion
                 {
                     phaseComplete = testState.getState() == State.LATENCY_COMPLETE;
+                } else if (phase.isWorkloadRun()) {
+                    // new "workload run": only complete once all workers are complete and state is set accordingly
+                    phaseComplete = testState.getState() == State.WORKLOAD_COMPLETE;
                 } else {
                     phaseComplete = testState.getState() == State.MEASURE
                             && (start + delta <= now);
@@ -234,6 +241,8 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
                                 if (phase.isLatencyRun()) {
                                     phase.resetSerial();
                                     testState.startColdQuery();
+                                } else if (phase.isWorkloadRun()) {
+                                    testState.startMeasure();
                                 }
                                 LOG.info(phase.currentPhaseString());
                                 if (phase.getRate() < lowestRate) {

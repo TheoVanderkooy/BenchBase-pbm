@@ -88,6 +88,10 @@ public final class BenchmarkState {
         state = State.LATENCY_COMPLETE;
     }
 
+    public void signalWorkloadComplete() {
+        state = State.WORKLOAD_COMPLETE;
+    }
+
     public void ackLatencyComplete() {
         state = State.MEASURE;
     }

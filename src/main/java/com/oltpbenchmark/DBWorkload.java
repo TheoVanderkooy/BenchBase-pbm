@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DBWorkload {
     private static final Logger LOG = LoggerFactory.getLogger(DBWorkload.class);
@@ -267,14 +268,29 @@ public class DBWorkload {
             int size = xmlConfig.configurationsAt("/works/work").size();
             for (int i = 1; i < size + 1; i++) {
                 final HierarchicalConfiguration<ImmutableNode> work = xmlConfig.configurationAt("works/work[" + i + "]");
-                List<String> weight_strings;
+                List<String> weight_strings = null;
+                List<String> count_strings = null;
 
                 // use a workaround if there are multiple workloads or single
                 // attributed workload
                 if (targetList.length > 1 || work.containsKey("weights[@bench]")) {
-                    weight_strings = Arrays.asList(work.getString("weights" + pluginTest).split("\\s*,\\s*"));
+                    if (work.containsKey("weights[@bench]")) {
+                        weight_strings = Arrays.asList(work.getString("weights" + pluginTest).split("\\s*,\\s*"));
+                    } else {
+                        count_strings = Arrays.asList(work.getString("counts" + pluginTest).split("\\s*,\\s*"));
+                    }
                 } else {
-                    weight_strings = Arrays.asList(work.getString("weights[not(@bench)]").split("\\s*,\\s*"));
+                    if (work.containsKey("weights")) {
+                        weight_strings = Arrays.asList(work.getString("weights[not(@bench)]").split("\\s*,\\s*"));
+                    } else {
+                        count_strings = Arrays.asList(work.getString("counts[not(@bench)]").split("\\s*,\\s*"));
+                    }
+                }
+
+                // should only have weights OR counts, not both
+                if (weight_strings != null && work.containsKey("counts")) {
+                    LOG.error(String.format("Work %d contains both weights and counts!", i));
+                    System.exit(-1);
                 }
 
                 int rate = 1;
@@ -335,7 +351,7 @@ public class DBWorkload {
                 if (!timed) {
                     if (serial) {
                         LOG.info("Timer disabled for serial run; will execute" + " all queries exactly once.");
-                    } else {
+                    } else if (count_strings == null) {
                         LOG.error("Must provide positive time bound for" + " non-serial executions. Either provide" + " a valid time or enable serial mode.");
                         System.exit(-1);
                     }
@@ -347,24 +363,30 @@ public class DBWorkload {
                     System.exit(-1);
                 }
 
-                ArrayList<Double> weights = new ArrayList<>();
+                ArrayList<Double> weights = null;
+                List<Integer> counts = null;
 
-                double totalWeight = 0;
+                if (weight_strings != null) {
+                    weights = new ArrayList<>();
+                    double totalWeight = 0;
 
-                for (String weightString : weight_strings) {
-                    double weight = Double.parseDouble(weightString);
-                    totalWeight += weight;
-                    weights.add(weight);
+                    for (String weightString : weight_strings) {
+                        double weight = Double.parseDouble(weightString);
+                        totalWeight += weight;
+                        weights.add(weight);
+                    }
+
+                    long roundedWeight = Math.round(totalWeight);
+
+                    if (roundedWeight != 100) {
+                        LOG.warn("rounded weight [{}] does not equal 100.  Original weight is [{}]", roundedWeight, totalWeight);
+                    }
+                } else {
+                    counts = count_strings.stream().map(Integer::parseInt).collect(Collectors.toList());
                 }
 
-                long roundedWeight = Math.round(totalWeight);
 
-                if (roundedWeight != 100) {
-                    LOG.warn("rounded weight [{}] does not equal 100.  Original weight is [{}]", roundedWeight, totalWeight);
-                }
-
-
-                wrkld.addPhase(i, time, warmup, rate, weights, rateLimited, disabled, serial, timed, activeTerminals, arrival);
+                wrkld.addPhase(i, time, warmup, rate, weights, counts, rateLimited, disabled, serial, timed, activeTerminals, arrival);
             }
 
             // CHECKING INPUT PHASES
@@ -376,6 +398,18 @@ public class DBWorkload {
                     if (p.isSerial()) {
                         LOG.error("However, note that since this a serial phase, the weights are irrelevant (but still must be included---sorry).");
                     }
+                    System.exit(-1);
+                } else if (p.isSerial() && p.getCounts() != null) {
+                    LOG.error(String.format("Configuration file is inconsistent, phase %d is serial but defines counts instead of weights.", j));
+                    System.exit(-1);
+                }
+
+                if (p.isTimed() && p.getCounts() != null) {
+                    LOG.error(String.format("Run cannot be time limited if counts are specified for phase %d.", j));
+                    System.exit(-1);
+                }
+                if (p.isRateLimited() && p.getCounts() != null) {
+                    LOG.error(String.format("Run cannot be rate limited if counts are specified for phase %d.", j));
                     System.exit(-1);
                 }
             }
