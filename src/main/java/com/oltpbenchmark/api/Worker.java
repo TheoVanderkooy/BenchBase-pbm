@@ -271,7 +271,9 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
                         workloadQueries.set(i, temp);
                     }
 
-                    LOG.info("Worker " + this.workerIdx + " query order: " + workloadQueries);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Worker " + this.workerIdx + " query order: " + workloadQueries);
+                    }
                 }
 
                 // Continue the workload run
