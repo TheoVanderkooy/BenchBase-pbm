@@ -109,6 +109,7 @@ public class ResultWriter {
         summaryMap.put("Latency Distribution", results.getDistributionStatistics().toMap());
         summaryMap.put("Throughput (requests/second)", results.requestsPerSecondThroughput());
         summaryMap.put("Goodput (requests/second)", results.requestsPerSecondGoodput());
+        summaryMap.put("Benchmark Runtime (nanoseconds)", results.getNanoseconds());
         for (String field : BENCHMARK_KEY_FIELD) {
             summaryMap.put(field, expConf.getString(field));
         }
@@ -228,4 +229,9 @@ public class ResultWriter {
     }
 
 
+    public void writeStreamTimes(PrintStream ps) {
+        String s = JSONUtil.toJSONString(results.getWorkerTimes());
+        ps.print(s);
+        ps.print('\n');
+    }
 }

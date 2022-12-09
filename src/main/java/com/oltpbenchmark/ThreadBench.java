@@ -306,12 +306,17 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
         try {
             int requests = finalizeWorkers(this.workerThreads);
 
+            List<Integer> workerTimes = new ArrayList<>(workers.size());
+
             // Combine all the latencies together in the most disgusting way
             // possible: sorting!
             for (Worker<?> w : workers) {
+                int worker_time = 0;
                 for (LatencyRecord.Sample sample : w.getLatencyRecords()) {
                     samples.add(sample);
+                    worker_time += sample.getLatencyMicrosecond();
                 }
+                workerTimes.add(worker_time);
             }
             Collections.sort(samples);
 
@@ -322,7 +327,7 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
             }
             DistributionStatistics stats = DistributionStatistics.computeStatistics(latencies);
 
-            Results results = new Results(measureEnd - start, requests, stats, samples);
+            Results results = new Results(measureEnd - start, requests, stats, samples, workerTimes);
 
             // Compute transaction histogram
             Set<TransactionType> txnTypes = new HashSet<>();
