@@ -80,25 +80,32 @@ public class Q1alt extends GenericQuery {
     );
 
     @Override
-    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor) throws SQLException {
+    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
         PreparedStatement stmt;
+        int day_range;
 
         // order date is from 92001 to 94406 (inclusive) => 2406 day range
-        int type = rand.number(1, 4);
-        int day_range = switch (type) {
-            case 1 -> 24; // 1% of rows
-            case 2 -> 241; // 10% of rows
-            case 3 -> 1203; // 50% of rows
-            default -> 0;
+        if (selectivity > 0) {
+            // If selectivity is specified, use that as the day range for all queries
+            day_range = (int) (selectivity * 2406);
+        } else {
+            // Otherwise, pick from {1%, 10%, 50%, 100%}
+            int type = rand.number(1, 4);
+            day_range = switch (type) {
+                case 1 -> 24; // 1% of rows
+                case 2 -> 241; // 10% of rows
+                case 3 -> 1203; // 50% of rows
+                default -> 0;
 
-        };
+            };
 
-        // type 4 => 100% of rows. Return query without WHERE clause.
-        if (type == 4) {
-            return this.getPreparedStatement(conn, query_stmt_nofilter);
+            // type 4 => 100% of rows. Return query without WHERE clause.
+            if (type == 4) {
+                return this.getPreparedStatement(conn, query_stmt_nofilter);
+            }
         }
 
-        // otherwise, generate random shipping date as the start
+        // generate random shipping date as the start
         // generate the same way as the loader (order date first, then random delta) to ensure the same distribution
         stmt = this.getPreparedStatement(conn, query_stmt);
         int odi = rand.number(OrderGenerator.ORDER_DATE_MIN, OrderGenerator.ORDER_DATE_MAX - day_range);

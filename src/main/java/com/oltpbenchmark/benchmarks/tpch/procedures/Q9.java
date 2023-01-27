@@ -68,7 +68,7 @@ public class Q9 extends GenericQuery {
     );
 
     @Override
-    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor) throws SQLException {
+    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
         // COLOR is randomly selected within the list of values defined for the generation of P_NAME in Clause 4.2.3
         String color = "%" + TPCHUtil.choice(TPCHConstants.P_NAME_GENERATOR, rand) + "%";
 

@@ -56,39 +56,43 @@ public class Q6alt extends GenericQuery {
     );
 
     @Override
-    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor) throws SQLException {
-//        // DATE is the first of January of a randomly selected year within [1993 .. 1997]
-//        int year = rand.number(1993, 1997);
-//        String date = String.format("%d-01-01", year);
+    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
+        int day_range;
 
         // DISCOUNT is randomly selected within [0.02 .. 0.09]
-//        String discount = String.format("0.0%d", rand.number(2, 9));
         double discount = rand.number(2, 9) / 100.;
 
         // QUANTITY is randomly selected within [24 .. 25]
         int quantity = rand.number(24, 25);
 
         // order date is from 92001 to 94406 (inclusive) => 2406 day range
-        int type = rand.number(1, 4);
-//        int type = 4;
-        int day_range = switch (type) {
-            case 1 -> 24; // 1% of rows
-            case 2 -> 241; // 10% of rows
-            case 3 -> 1203; // 50% of rows
-            default -> 0;
-        };
+        if (selectivity > 0) {
+            // If selectivity is specified, use that as the day range for all queries
+            day_range = (int) (selectivity * 2406);
 
-        // type 4 => 100% of rows. Return query without WHERE clause.
-        if (type == 4) {
-            PreparedStatement stmt = this.getPreparedStatement(conn, query_stmt_nofilter);
-            stmt.setDouble(1, discount);
-            stmt.setDouble(2, discount);
-            stmt.setInt(3, quantity);
+        } else {
+            // Otherwise, pick from {1%, 10%, 50%, 100%}
+            int type = rand.number(1, 4);
+            day_range = switch (type) {
+                case 1 -> 24; // 1% of rows
+                case 2 -> 241; // 10% of rows
+                case 3 -> 1203; // 50% of rows
+                default -> 0;
 
-            return stmt;
+            };
+
+            // type 4 => 100% of rows. Return query without WHERE clause.
+            if (type == 4) {
+                PreparedStatement stmt = this.getPreparedStatement(conn, query_stmt_nofilter);
+                stmt.setDouble(1, discount);
+                stmt.setDouble(2, discount);
+                stmt.setInt(3, quantity);
+
+                return stmt;
+            }
         }
 
-        // otherwise, generate random shipping date as the start
+        // generate random shipping date as the start
         // generate the same way as the loader (order date first, then random delta) to ensure the same distribution
         PreparedStatement stmt = this.getPreparedStatement(conn, query_stmt);
         int odi = rand.number(OrderGenerator.ORDER_DATE_MIN, OrderGenerator.ORDER_DATE_MAX - day_range);
@@ -104,10 +108,5 @@ public class Q6alt extends GenericQuery {
         stmt.setDouble(4, discount);
         stmt.setInt(5, quantity);
         return stmt;
-
-
-
-
-
     }
 }

@@ -71,7 +71,7 @@ public class Q22 extends GenericQuery {
     );
 
     @Override
-    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor) throws SQLException {
+    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
         // I1 - I7 are randomly selected without repetition from the possible values
 
 

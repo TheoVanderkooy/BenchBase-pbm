@@ -30,18 +30,22 @@ import java.sql.SQLException;
 public class TPCHWorker extends Worker<TPCHBenchmark> {
 
     private final RandomGenerator rand;
+    private final double scaleFactor;
+    private final double selectivity;
 
     public TPCHWorker(TPCHBenchmark benchmarkModule, int id) {
         super(benchmarkModule, id);
         this.rng().setSeed(15721);
         rand = new RandomGenerator(this.rng().nextInt());
+        this.scaleFactor = this.configuration.getScaleFactor();
+        this.selectivity = this.configuration.getSelectivity();
     }
 
     @Override
     protected TransactionStatus executeWork(Connection conn, TransactionType nextTransaction) throws UserAbortException, SQLException {
         try {
             GenericQuery proc = (GenericQuery) this.getProcedure(nextTransaction.getProcedureClass());
-            proc.run(conn, rand, this.configuration.getScaleFactor());
+            proc.run(conn, rand, this.scaleFactor, this.selectivity);
         } catch (ClassCastException e) {
             throw new RuntimeException(e);
         }

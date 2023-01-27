@@ -41,7 +41,7 @@ public class Q6 extends GenericQuery {
     );
 
     @Override
-    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor) throws SQLException {
+    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
         // DATE is the first of January of a randomly selected year within [1993 .. 1997]
         int year = rand.number(1993, 1997);
         String date = String.format("%d-01-01", year);

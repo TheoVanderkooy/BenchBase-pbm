@@ -56,7 +56,7 @@ public class Q3 extends GenericQuery {
     );
 
     @Override
-    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor) throws SQLException {
+    protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
         String segment = TPCHUtil.choice(TPCHConstants.SEGMENTS, rand);
 
         // date must be randomly selected between [1995-03-01, 1995-03-31]
