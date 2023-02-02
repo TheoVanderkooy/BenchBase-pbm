@@ -35,8 +35,10 @@ public class TPCHWorker extends Worker<TPCHBenchmark> {
 
     public TPCHWorker(TPCHBenchmark benchmarkModule, int id) {
         super(benchmarkModule, id);
-        this.rng().setSeed(15721);
-        rand = new RandomGenerator(this.rng().nextInt());
+        // "this.rng()" will be the same generator for each worker, since initialized from the same thread.
+        // We want each thread's seed to be dependent (only) on the main thread seed (if specified, for repeatable
+        // tests) but not the same for each worker!
+        rand = new RandomGenerator(this.rng().nextInt() + 15721 * id);
         this.scaleFactor = this.configuration.getScaleFactor();
         this.selectivity = this.configuration.getSelectivity();
     }
