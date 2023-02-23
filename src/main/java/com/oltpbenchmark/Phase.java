@@ -29,7 +29,7 @@ public class Phase {
     }
 
     // TODO theo --- seed the random gen for consistent workload?
-    private final Random gen = new Random(12345);
+    private final Random gen = new Random();
     private final String benchmarkName;
     private final int id;
     private final int time;

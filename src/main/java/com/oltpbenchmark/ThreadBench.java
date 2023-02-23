@@ -306,12 +306,12 @@ public class ThreadBench implements Thread.UncaughtExceptionHandler {
         try {
             int requests = finalizeWorkers(this.workerThreads);
 
-            List<Integer> workerTimes = new ArrayList<>(workers.size());
+            List<Long> workerTimes = new ArrayList<>(workers.size());
 
             // Combine all the latencies together in the most disgusting way
             // possible: sorting!
             for (Worker<?> w : workers) {
-                int worker_time = 0;
+                long worker_time = 0;
                 for (LatencyRecord.Sample sample : w.getLatencyRecords()) {
                     samples.add(sample);
                     worker_time += sample.getLatencyMicrosecond();
