@@ -91,7 +91,7 @@ public class LatencyRecord implements Iterable<LatencyRecord.Sample> {
     public static final class Sample implements Comparable<Sample> {
         private final int transactionType;
         private long startNanosecond;
-        private final int latencyMicrosecond;
+        private final long latencyMicrosecond;
         private final int workerId;
         private final int phaseId;
 
@@ -111,7 +111,7 @@ public class LatencyRecord implements Iterable<LatencyRecord.Sample> {
             return startNanosecond;
         }
 
-        public int getLatencyMicrosecond() {
+        public long getLatencyMicrosecond() {
             return latencyMicrosecond;
         }
 
