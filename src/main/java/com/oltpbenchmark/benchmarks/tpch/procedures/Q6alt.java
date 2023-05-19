@@ -59,6 +59,11 @@ public class Q6alt extends GenericQuery {
     protected PreparedStatement getStatement(Connection conn, RandomGenerator rand, double scaleFactor, double selectivity) throws SQLException {
         int day_range;
 
+        // only take the fractional part of selectivity
+        if (selectivity > 1.) {
+            selectivity = selectivity % 1.;
+        }
+
         // DISCOUNT is randomly selected within [0.02 .. 0.09]
         double discount = rand.number(2, 9) / 100.;
 

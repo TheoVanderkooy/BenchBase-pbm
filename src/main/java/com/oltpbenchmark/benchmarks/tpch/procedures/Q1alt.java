@@ -84,6 +84,11 @@ public class Q1alt extends GenericQuery {
         PreparedStatement stmt;
         int day_range;
 
+        // only take the fractional part of selectivity
+        if (selectivity > 1.) {
+            selectivity = selectivity % 1.;
+        }
+
         // order date is from 92001 to 94406 (inclusive) => 2406 day range
         if (selectivity > 0) {
             // If selectivity is specified, use that as the day range for all queries
