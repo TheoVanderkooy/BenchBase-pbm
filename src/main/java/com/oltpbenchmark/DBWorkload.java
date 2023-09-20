@@ -331,6 +331,9 @@ public class DBWorkload {
                 // a serial (rather than random) order.
                 boolean serial = Boolean.parseBoolean(work.getString("serial", Boolean.FALSE.toString()));
 
+                // Whether to randomize order or not for "workload" run
+                // TODO: unify this with "serial"? not that important...
+                boolean randomize_order = Boolean.parseBoolean(work.getString("randomize", Boolean.TRUE.toString()));
 
                 int activeTerminals;
                 activeTerminals = work.getInt("active_terminals[not(@bench)]", terminals);
@@ -386,7 +389,7 @@ public class DBWorkload {
                 }
 
 
-                wrkld.addPhase(i, time, warmup, rate, weights, counts, rateLimited, disabled, serial, timed, activeTerminals, arrival);
+                wrkld.addPhase(i, time, warmup, rate, weights, counts, rateLimited, disabled, serial, timed, activeTerminals, arrival, randomize_order);
             }
 
             // CHECKING INPUT PHASES

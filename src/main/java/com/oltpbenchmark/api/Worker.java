@@ -260,15 +260,17 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
                         }
                     }
 
-                    // "rng" is threadlocal and fixed-seed, so would have the same results in each worker.
-                    // add the worker index so workers get different orders, and use this to seed a new local RNG
-                    Random r = new Random((long)rng().nextInt() + this.workerIdx);
-                    for (int i = 0; i < workloadQueries.size(); ++i) {
-                        int j = r.nextInt(i, workloadQueries.size());
+                    if (curPhase.randomize_order) {
+                        // "rng" is threadlocal and fixed-seed, so would have the same results in each worker.
+                        // add the worker index so workers get different orders, and use this to seed a new local RNG
+                        Random r = new Random((long) rng().nextInt() + this.workerIdx);
+                        for (int i = 0; i < workloadQueries.size(); ++i) {
+                            int j = r.nextInt(i, workloadQueries.size());
 
-                        int temp = workloadQueries.get(j);
-                        workloadQueries.set(j, workloadQueries.get(i));
-                        workloadQueries.set(i, temp);
+                            int temp = workloadQueries.get(j);
+                            workloadQueries.set(j, workloadQueries.get(i));
+                            workloadQueries.set(i, temp);
+                        }
                     }
 
                     if (LOG.isDebugEnabled()) {

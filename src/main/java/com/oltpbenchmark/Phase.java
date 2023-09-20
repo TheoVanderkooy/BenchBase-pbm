@@ -28,7 +28,6 @@ public class Phase {
         REGULAR, POISSON,
     }
 
-    // TODO theo --- seed the random gen for consistent workload?
     private final Random gen = new Random();
     private final String benchmarkName;
     private final int id;
@@ -47,9 +46,10 @@ public class Phase {
     private final List<Integer> counts;
     private final int activeTerminals;
     private int nextSerial;
+    public final boolean randomize_order;
 
 
-    Phase(String benchmarkName, int id, int t, int wt, int r, List<Double> weights, List<Integer> counts, boolean rateLimited, boolean disabled, boolean serial, boolean timed, int activeTerminals, Arrival a) {
+    Phase(String benchmarkName, int id, int t, int wt, int r, List<Double> weights, List<Integer> counts, boolean rateLimited, boolean disabled, boolean serial, boolean timed, int activeTerminals, Arrival a, boolean randomize) {
         this.benchmarkName = benchmarkName;
         this.id = id;
         this.time = t;
@@ -65,6 +65,7 @@ public class Phase {
         this.nextSerial = 1;
         this.activeTerminals = activeTerminals;
         this.arrival = a;
+        this.randomize_order = randomize;
     }
 
 
